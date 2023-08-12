@@ -1,113 +1,163 @@
-import Image from 'next/image'
+'use client';
+import { debounce } from "lodash";
+import { AutoComplete } from "@/components/autocomplete"
+import { useState, useCallback, useEffect } from "react"
+import React from 'react'
+import FullCalendar from '@fullcalendar/react'
+import interactionPlugin from '@fullcalendar/interaction'
+import multiMonthPlugin from '@fullcalendar/multimonth'
+import listPlugin from '@fullcalendar/list';
+import enLocale from '@fullcalendar/core/locales/en-gb'
+import twLocale from '@fullcalendar/core/locales/zh-tw'
+import tippy from 'tippy.js';
+import 'tippy.js/dist/tippy.css';
+import 'tippy.js/animations/perspective.css';
+
+const FUGLE_API = process.env.NEXT_PUBLIC_FUGLE_API_KEY;
+const FUGLE_END_POINT = process.env.NEXT_PUBLIC_FUGLE_END_POINT;
+
+const getTSEStocks = async () => {
+  const res = await fetch(`${FUGLE_END_POINT}/snapshot/quotes/TSE`, {
+    method: 'GET',
+    headers: {
+      'X-API-KEY': FUGLE_API,
+    }
+  });
+  if (!res.ok) {
+    throw new Error('Failed to fetch');
+  }
+  const response = await res.json();
+  const { data } = response;
+  return data;
+};
 
 export default function Home() {
+  const [isLoading, setLoading] = useState(false)
+  const [stock, setStock] = useState('')
+  const [stockList, setStockList] = useState([])
+  const [allStocks, setAllStocks] = useState([])
+  const [events, setEvents] = useState([
+    { title: 'event 1-1', start: '2023-07-01' },
+    { 
+      title: 'event 1-2',
+      start: '2023-07-02',
+      color: 'blue',
+      description: 'description for Repeating Event'
+    },
+    { 
+      title: 'event 2-1',
+      start: '2023-07-06',
+      color: 'purple',
+      description: 'description for Repeating Event'
+    },
+    { title: 'event 2-2', start: '2023-07-07', },
+  ]);
+
+  useEffect(() => {
+    async function setAllStock() {
+      setLoading(true);
+      try {
+        const allStocks = await getTSEStocks();
+        setAllStocks(allStocks);
+      } catch (error) {
+        throw new Error(error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    setAllStock();
+  }, []);
+
+  const setStockOptions = (code) => {
+    const matchedStock = allStocks.filter(((item) => item.symbol.includes(code)));
+    if (matchedStock.length > 0) {
+      const resultList = matchedStock.map((item) => {
+        return { value: item.symbol, label: `${item.symbol} - ${item.name}` }
+      });
+      setStockList(resultList);
+    } else {
+      setStockList([]);
+    }
+  }
+
+  // const getStockInfo = async (code) => {
+  // }
+
+  const handleStockSearchChange = debounce((value) => {
+    if (value) {
+      setStockOptions(value);
+    } else {
+      setStockList([]);
+    }
+  }, 500);
+
+  const handleStockItemSelected = useCallback((option) => {
+    setStock(option);
+  }, []);
+
+  const handleCalMount = useCallback((item) => {
+    const { description = '' } = item?.event?.extendedProps;
+    if (description) {
+      tippy(item.el, {
+        trigger: 'mouseenter',
+        content: description,
+        animation: 'perspective',
+      })
+    }
+  }, []);
+
+  if (stock) {
+
+  }
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">src/app/page.js</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
+    <div>
+      <div className="mx-auto my-12 max-w-[33.75rem] px-6 text-black antialiased sm:my-32">
+        <h1 className="text-2xl">追蹤股票除權息</h1>
+        <div className="flex flex-col gap-4 mt-8">
+          <AutoComplete
+            options={stockList}
+            emptyMessage="查無結果..."
+            placeholder="搜尋股票"
+            isLoading={isLoading}
+            value={stock}
+            onInputValueChange={handleStockSearchChange}
+            onItemSelected={handleStockItemSelected}
+          />
+          <span className="text-sm">選擇的股票: {stock?.label ? stock.label : "尚未選擇"}</span>
         </div>
       </div>
-
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 before:lg:h-[360px] z-[-1]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
+      <div className="mx-auto p-4 max-w-4xl">
+        <FullCalendar
+          plugins={[ interactionPlugin, multiMonthPlugin, listPlugin ]}
+          initialView="multiMonthYearGrid"
+          headerToolbar={{
+            left: 'prev,next today',
+            center: 'title',
+            right: 'multiMonthYearGrid,multiMonthYearStack,listYear'
+          }}
+          views={{
+            multiMonthYearGrid: {
+              type: 'multiMonthYear',
+              buttonText: '網格'
+            },
+            multiMonthYearStack: {
+              type: 'multiMonthYear',
+              buttonText: '堆疊',
+              multiMonthMaxColumns: 1
+            },
+            listYear: {
+              buttonText: '列表顯示'
+            },
+          }}
+          locale={twLocale}
+          locales={[enLocale, twLocale]}
+          eventColor="green"
+          events={events}
+          eventDidMount={handleCalMount}
         />
       </div>
-
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800 hover:dark:bg-opacity-30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Explore the Next.js 13 playground.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
+    </div>
   )
 }
+
