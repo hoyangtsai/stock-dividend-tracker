@@ -1,4 +1,6 @@
 'use client';
+
+import { useDispatch, useSelector } from 'react-redux';
 import { debounce } from "lodash";
 import { AutoComplete } from "@/components/autocomplete"
 import { useState, useCallback, useEffect } from "react"
@@ -12,6 +14,7 @@ import twLocale from '@fullcalendar/core/locales/zh-tw'
 import tippy from 'tippy.js';
 import 'tippy.js/dist/tippy.css';
 import 'tippy.js/animations/perspective.css';
+import { setWatchList } from '@/features/stock/stockSlice';
 
 const FUGLE_API = process.env.NEXT_PUBLIC_FUGLE_API_KEY;
 const FUGLE_END_POINT = process.env.NEXT_PUBLIC_FUGLE_END_POINT;
@@ -33,8 +36,7 @@ const getTSEStocks = async () => {
 
 export default function Home() {
   const [isLoading, setLoading] = useState(false)
-  const [stock, setStock] = useState('')
-  const [stockList, setStockList] = useState([])
+  const [stockOptionList, setStockOptionList] = useState([])
   const [allStocks, setAllStocks] = useState([])
   const [events, setEvents] = useState([
     { title: 'event 1-1', start: '2023-07-01' },
@@ -52,8 +54,18 @@ export default function Home() {
     },
     { title: 'event 2-2', start: '2023-07-07', },
   ]);
+  const stockWatchList = useSelector((state) => state.stock.watchList);
+  const dispatch = useDispatch();
 
+  const getLastSelectedStock = () => {
+    if (Object.keys(stockWatchList).length === 0) return '';
+
+    const keys = Object.keys(stockWatchList);
+    return stockWatchList[keys[keys.length - 1]]?.label;
+  }
+    
   useEffect(() => {
+    // fetch all TSE stocks
     async function setAllStock() {
       setLoading(true);
       try {
@@ -72,28 +84,38 @@ export default function Home() {
     const matchedStock = allStocks.filter(((item) => item.symbol.includes(code)));
     if (matchedStock.length > 0) {
       const resultList = matchedStock.map((item) => {
-        return { value: item.symbol, label: `${item.symbol} - ${item.name}` }
+        return { value: item.symbol, label: `${item.symbol} - ${item.name}`, ...item }
       });
-      setStockList(resultList);
+      setStockOptionList(resultList);
     } else {
-      setStockList([]);
+      setStockOptionList([]);
     }
   }
 
-  // const getStockInfo = async (code) => {
-  // }
+  const getStockInfo = async (symbol) => {
+    if (symbol) {
+      const res = await fetch(`http://127.0.0.1:5000/stock/${symbol}`);
+      if (!res.ok) {
+        throw new Error('Failed to fetch');
+      }
+      const response = await res.json();
+      const { data } = response;
+      console.log('data :>> ', data);
+    }
+  }
 
   const handleStockSearchChange = debounce((value) => {
     if (value) {
       setStockOptions(value);
     } else {
-      setStockList([]);
+      setStockOptionList([]);
     }
   }, 500);
 
   const handleStockItemSelected = useCallback((option) => {
-    setStock(option);
-  }, []);
+    dispatch(setWatchList(option));
+    getStockInfo(option?.symbol);
+  }, [dispatch]);
 
   const handleCalMount = useCallback((item) => {
     const { description = '' } = item?.event?.extendedProps;
@@ -106,25 +128,23 @@ export default function Home() {
     }
   }, []);
 
-  if (stock) {
-
-  }
-
   return (
     <div>
       <div className="mx-auto my-12 max-w-[33.75rem] px-6 text-black antialiased sm:my-32">
         <h1 className="text-2xl">追蹤股票除權息</h1>
         <div className="flex flex-col gap-4 mt-8">
           <AutoComplete
-            options={stockList}
+            options={stockOptionList}
             emptyMessage="查無結果..."
             placeholder="搜尋股票"
             isLoading={isLoading}
-            value={stock}
+            value={getLastSelectedStock()}
             onInputValueChange={handleStockSearchChange}
             onItemSelected={handleStockItemSelected}
           />
-          <span className="text-sm">選擇的股票: {stock?.label ? stock.label : "尚未選擇"}</span>
+          <span className="text-sm">選擇的股票:
+            {getLastSelectedStock()}
+          </span>
         </div>
       </div>
       <div className="mx-auto p-4 max-w-4xl">

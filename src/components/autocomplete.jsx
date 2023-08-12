@@ -78,6 +78,8 @@ export const AutoComplete = ({
     (selectedOption) => {
       setInputValue(selectedOption.label)
 
+      console.log('selectedOption :>> ', selectedOption);
+
       setSelected(selectedOption)
       onItemSelected?.(selectedOption)
 
