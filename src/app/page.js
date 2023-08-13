@@ -19,8 +19,8 @@ import { setWatchList } from '@/features/stock/stockSlice';
 const FUGLE_API = process.env.NEXT_PUBLIC_FUGLE_API_KEY;
 const FUGLE_END_POINT = process.env.NEXT_PUBLIC_FUGLE_END_POINT;
 
-const getTSEStocks = async () => {
-  const res = await fetch(`${FUGLE_END_POINT}/snapshot/quotes/TSE`, {
+const getQuotesByMarket = async (market) => {
+  const res = await fetch(`${FUGLE_END_POINT}/snapshot/quotes/${market}`, {
     method: 'GET',
     headers: {
       'X-API-KEY': FUGLE_API,
@@ -69,8 +69,9 @@ export default function Home() {
     async function setAllStock() {
       setLoading(true);
       try {
-        const allStocks = await getTSEStocks();
-        setAllStocks(allStocks);
+        const tseStocks = await getQuotesByMarket('TSE');
+        const otcStocks = await getQuotesByMarket('OTC');
+        setAllStocks([...tseStocks, ...otcStocks]);
       } catch (error) {
         throw new Error(error);
       } finally {
@@ -80,8 +81,8 @@ export default function Home() {
     setAllStock();
   }, []);
 
-  const setStockOptions = (code) => {
-    const matchedStock = allStocks.filter(((item) => item.symbol.includes(code)));
+  const setStockOptions = (value) => {
+    const matchedStock = allStocks.filter(((item) => item.symbol.includes(value) || item.name.includes(value)));
     if (matchedStock.length > 0) {
       const resultList = matchedStock.map((item) => {
         return { value: item.symbol, label: `${item.symbol} - ${item.name}`, ...item }
@@ -93,15 +94,15 @@ export default function Home() {
   }
 
   const getStockInfo = async (symbol) => {
-    if (symbol) {
-      const res = await fetch(`http://127.0.0.1:5000/stock/${symbol}`);
-      if (!res.ok) {
-        throw new Error('Failed to fetch');
-      }
-      const response = await res.json();
-      const { data } = response;
-      console.log('data :>> ', data);
-    }
+    // if (symbol) {
+    //   const res = await fetch(`http://127.0.0.1:5000/stock/${symbol}`);
+    //   if (!res.ok) {
+    //     throw new Error('Failed to fetch');
+    //   }
+    //   const response = await res.json();
+    //   const { data } = response;
+    //   console.log('data :>> ', data);
+    // }
   }
 
   const handleStockSearchChange = debounce((value) => {
