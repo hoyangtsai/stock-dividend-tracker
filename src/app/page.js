@@ -16,7 +16,7 @@ import 'tippy.js/dist/tippy.css';
 import 'tippy.js/animations/perspective.css';
 import { setWatchList } from '@/features/stock/stockSlice';
 import usePrevious from '@/lib/hooks/usePrevious';
-import LoadingMask from '@/components/loadingMask';
+import LoadingMask from '@/components/LoadingMask';
 
 const FUGLE_API = process.env.NEXT_PUBLIC_FUGLE_API_KEY;
 const FUGLE_END_POINT = process.env.NEXT_PUBLIC_FUGLE_END_POINT;
