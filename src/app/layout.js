@@ -1,11 +1,11 @@
-import './globals.css'
+import './global.css'
 import { Inter } from 'next/font/google'
 import RootProvider from './provider'
 
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata = {
-  title: 'Stock Dividend Calendar',
+  title: 'Stock Dividend Tracker',
   description: 'A tracker of taiwan stock dividend date',
 }
 
