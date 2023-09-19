@@ -95,17 +95,17 @@ export default function Home() {
 
   // getStockInfo
   useEffect(() => {
-    const controller = new AbortController();
-    const signal = controller.signal;
+    // const controller = new AbortController();
+    // const signal = controller.signal;
 
     const getStockInfo = async (symbol) => {
       if (symbol) {
         setIsFetching(true);
         try {
-          const res = await fetch(`${HOST}/stock/${symbol}`, { signal });
-          // if (!res.ok) {
-          //   throw new Error('Failed to fetch');
-          // }
+          const res = await fetch(`${HOST}/stock/${symbol}`);
+          if (!res.ok) {
+            throw new Error('Failed to fetch');
+          }
           const response = await res.json();
           const { data } = response;
           console.log('data :>> ', data);
@@ -123,7 +123,7 @@ export default function Home() {
           setEvents(eventDates);
         } catch (e) {
           console.log('fetch StockInfo Error:', e);
-          console.log('signal.aborted:', signal.aborted);
+          // console.log('signal.aborted:', signal.aborted);
         } finally {
           setIsFetching(false);
         }
@@ -135,7 +135,7 @@ export default function Home() {
     }
 
     return () => {
-      controller.abort();
+      // controller.abort();
     }
   }, [lastSymbol, currentSymbol])
   
