@@ -97,7 +97,7 @@ export default function Home() {
           </span>
         </div>
       </div>
-      <div className="mx-auto p-4 max-w-4xl relative">
+      <div className="mx-auto p-4 max-w-4xl">
         <StockCalendar symbol={currentSymbol} />
       </div>
     </div>

@@ -96,6 +96,7 @@ const StockCalendar = ({ symbol }) => {
       <LoadingMask isVisible={isLoading} />
       <div className="relative z-10">
         <FullCalendar
+          height={480}
           plugins={[ interactionPlugin, multiMonthPlugin, listPlugin ]}
           initialView="multiMonthYearGrid"
           headerToolbar={{
