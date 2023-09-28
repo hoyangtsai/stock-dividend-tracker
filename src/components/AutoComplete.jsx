@@ -102,11 +102,12 @@ export const AutoComplete = ({
           placeholder={placeholder}
           disabled={disabled}
           className="text-base"
+          onClear={() => handleInputValueChange('')}
         />
       </div>
       <div className="mt-1 relative">
         {isOpen ? (
-          <div className="absolute top-0 z-10 w-full rounded-xl bg-stone-50 outline-none animate-in fade-in-0 zoom-in-95">
+          <div className="absolute top-0 z-50 w-full rounded-xl bg-stone-50 outline-none animate-in fade-in-0 zoom-in-95">
             <CommandList className="ring-1 ring-slate-200 rounded-lg">
               {isLoading ? (
                 <CommandPrimitive.Loading>

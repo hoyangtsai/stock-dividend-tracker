@@ -1,8 +1,9 @@
 'use client';
 
+import { useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { debounce } from "lodash";
-import { AutoComplete } from "@/components/autocomplete"
+import { AutoComplete } from "@/components/AutoComplete"
 import { useState, useCallback, useEffect } from "react"
 import { setWatchList } from '@/features/stock/stockSlice';
 
@@ -51,7 +52,7 @@ export default function Home() {
     setAllStock();
   }, []);
 
-  const setStockOptions = (value) => {
+  const setStockOptions = useCallback((value) => {
     const matchedStock = allStocks.filter(((item) => item.symbol.includes(value) || item.name.includes(value)));
     if (matchedStock.length > 0) {
       const resultList = matchedStock.map((item) => {
@@ -61,22 +62,25 @@ export default function Home() {
     } else {
       setStockOptionList([]);
     }
-  }
+  }, [allStocks]);
 
-  const handleStockSearchChange = debounce((value) => {
+  const handleInputValueChange = useCallback((value) => {
     if (value) {
       setStockOptions(value);
     } else {
       setStockOptionList([]);
+      setCurrentSymbol('');
     }
-  }, 500);
+  }, [setStockOptions]);
 
-  const handleStockItemSelected = useCallback(async (option) => {
+  const debounceInputValueChange = useMemo(
+    () => debounce(handleInputValueChange, 250)
+  , [handleInputValueChange]);
+
+  const handleItemSelected = useCallback(async (option) => {
     dispatch(setWatchList(option));
-    console.log('option :>> ', option);
     setCurrentSymbol(option?.symbol || '');
   }, [dispatch]);
-
 
   return (
     <div>
@@ -89,8 +93,8 @@ export default function Home() {
             placeholder="搜尋上市上櫃股票"
             isLoading={isLoading}
             value={stockWatchList[currentSymbol]?.label}
-            onInputValueChange={handleStockSearchChange}
-            onItemSelected={handleStockItemSelected}
+            onInputValueChange={debounceInputValueChange}
+            onItemSelected={handleItemSelected}
           />
           <span className="text-sm text-base-content">選擇的股票:
             {stockWatchList[currentSymbol]?.label}

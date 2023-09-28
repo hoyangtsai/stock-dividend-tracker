@@ -1,6 +1,6 @@
 import * as React from "react"
 import { Command as CommandPrimitive } from "cmdk"
-import { Search } from "lucide-react"
+import { Search, XCircle } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
@@ -32,7 +32,7 @@ const CommandDialog = ({
   );
 }
 
-const CommandInput = React.forwardRef(({ className, ...props }, ref) => (
+const CommandInput = React.forwardRef(({ className, onClear, ...props }, ref) => (
   <div className="flex items-center border-b px-3 text-base-content" cmdk-input-wrapper="">
     <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
     <CommandPrimitive.Input
@@ -42,6 +42,7 @@ const CommandInput = React.forwardRef(({ className, ...props }, ref) => (
         className
       )}
       {...props} />
+    <XCircle className="h-6 w-6 shrink-0 opacity-50" onClick={onClear} />
   </div>
 ))
 
