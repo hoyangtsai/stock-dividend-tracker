@@ -58,29 +58,35 @@ const StockCalendar = ({ symbol }) => {
 
     let eventDates = [];
     for (const r of data) {
-      const { CashExDividendTradingDate, CashEarningsDistribution, StockExDividendTradingDate, StockEarningsDistribution } = r;
+      const {
+        CashExDividendTradingDate, CashEarningsDistribution, CashStatutorySurplus, 
+        StockExDividendTradingDate, StockEarningsDistribution, StockStatutorySurplus } = r;
       
       let roundCash = (Math.round(CashEarningsDistribution * 10000) / 10000),
           roundStock = (Math.round(StockEarningsDistribution * 10000) / 10000);
 
-      if (CashEarningsDistribution == 0 && StockEarningsDistribution > 0) {
+      if (CashEarningsDistribution == 0 &&
+        (StockEarningsDistribution > 0 || StockStatutorySurplus > 0)) {
         eventDates.push({
           title: `${stockWatchList[symbol]?.name || '' }除權`,
           start: StockExDividendTradingDate,
           description: `配股:${roundStock}`,
           symbol: symbol,
         });
-      } else if (StockEarningsDistribution == 0 && CashEarningsDistribution > 0) {
+      } else if (
+        StockEarningsDistribution == 0 &&
+        (CashEarningsDistribution > 0 || CashStatutorySurplus > 0)) {
         eventDates.push({
           title: `${stockWatchList[symbol]?.name || '' }除息`,
           start: CashExDividendTradingDate,
           description: `現金:${roundCash}`,
           symbol: symbol,
         });
-      } else if (CashEarningsDistribution > 0 && StockEarningsDistribution > 0) {
+      } else if (
+          (CashEarningsDistribution > 0 || CashStatutorySurplus > 0) &&
+          (StockEarningsDistribution > 0 || StockStatutorySurplus > 0)) {
         eventDates.push({
           title: `${stockWatchList[symbol]?.name || '' }除權息`,
-          // title: `除權息`,
           start: CashExDividendTradingDate,
           description: `現金:${roundCash}, 配股:${roundStock}`,
           symbol: symbol,
