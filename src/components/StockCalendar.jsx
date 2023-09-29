@@ -62,8 +62,8 @@ const StockCalendar = ({ symbol }) => {
         CashExDividendTradingDate, CashEarningsDistribution, CashStatutorySurplus, 
         StockExDividendTradingDate, StockEarningsDistribution, StockStatutorySurplus } = r;
       
-      let roundCash = (Math.round(CashEarningsDistribution * 10000) / 10000),
-          roundStock = (Math.round(StockEarningsDistribution * 10000) / 10000);
+      let roundCash = Math.round((CashEarningsDistribution * 10000 + CashStatutorySurplus * 10000) / 10000),
+          roundStock = Math.round((StockEarningsDistribution * 10000 + StockStatutorySurplus * 10000) / 10000);
 
       if (CashEarningsDistribution == 0 &&
         (StockEarningsDistribution > 0 || StockStatutorySurplus > 0)) {
