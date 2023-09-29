@@ -11,25 +11,9 @@ import 'tippy.js/animations/perspective.css';
 import useSWR from 'swr'
 import { useSelector } from 'react-redux';
 import LoadingMask from '@/components/LoadingMask';
+import randomColor from 'randomcolor';
 
 const HOST = 'https://ntp.tshy.me/stock-service';
-
-const dummy = [
-  { title: 'event 1-1', start: '2023-07-01' },
-  { 
-    title: 'event 1-2',
-    start: '2023-07-02',
-    color: 'blue',
-    description: 'description for Repeating Event'
-  },
-  { 
-    title: 'event 2-1',
-    start: '2023-07-06',
-    color: 'purple',
-    description: 'description for Repeating Event'
-  },
-  { title: 'event 2-2', start: '2023-07-07', },
-];
 
 const fetcher = (url) => fetch(url).then(r => r.json());
 
@@ -56,40 +40,51 @@ const StockCalendar = ({ symbol }) => {
     
     const { data } = resp;
 
+    const aColor = randomColor({
+      luminosity: 'dark',
+    });
+
     let eventDates = [];
     for (const r of data) {
       const {
         CashExDividendTradingDate, CashEarningsDistribution, CashStatutorySurplus, 
         StockExDividendTradingDate, StockEarningsDistribution, StockStatutorySurplus } = r;
       
-      let roundCash = Math.round((CashEarningsDistribution * 10000 + CashStatutorySurplus * 10000) / 10000),
-          roundStock = Math.round((StockEarningsDistribution * 10000 + StockStatutorySurplus * 10000) / 10000);
-
+      // twice parseFloat is to remove tailing zeros
+      let roundCash = parseFloat(
+            parseFloat((CashEarningsDistribution * 10000 + CashStatutorySurplus * 10000) / 10000).toFixed(4)),
+          roundStock = parseFloat(
+            parseFloat((StockEarningsDistribution * 10000 + StockStatutorySurplus * 10000) / 10000).toFixed(4));    
+      let title = stockWatchList[symbol]?.name || '';
       if (CashEarningsDistribution == 0 &&
         (StockEarningsDistribution > 0 || StockStatutorySurplus > 0)) {
         eventDates.push({
-          title: `${stockWatchList[symbol]?.name || '' }除權`,
+          title: `${title}除權`,
           start: StockExDividendTradingDate,
           description: `配股:${roundStock}`,
           symbol: symbol,
+          color: aColor,
         });
       } else if (
         StockEarningsDistribution == 0 &&
         (CashEarningsDistribution > 0 || CashStatutorySurplus > 0)) {
+        
         eventDates.push({
-          title: `${stockWatchList[symbol]?.name || '' }除息`,
+          title: `${title}除息`,
           start: CashExDividendTradingDate,
           description: `現金:${roundCash}`,
           symbol: symbol,
+          color: aColor,
         });
       } else if (
           (CashEarningsDistribution > 0 || CashStatutorySurplus > 0) &&
           (StockEarningsDistribution > 0 || StockStatutorySurplus > 0)) {
         eventDates.push({
-          title: `${stockWatchList[symbol]?.name || '' }除權息`,
+          title: `${title}除權息`,
           start: CashExDividendTradingDate,
           description: `現金:${roundCash}, 配股:${roundStock}`,
           symbol: symbol,
+          color: aColor,
         });
       }
     }
